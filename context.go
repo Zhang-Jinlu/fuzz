@@ -13,6 +13,7 @@ type Context struct {
 	Req        *http.Request
 	Path       string
 	Method     string
+	Params     map[string]string
 	StatusCode int
 }
 
@@ -44,6 +45,11 @@ func (c *Context) Status(code int) {
 // SetHeader 设置响应头信息
 func (c *Context) SetHeader(key string, value string) {
 	c.Writer.Header().Set(key, value)
+}
+
+// 获取context中参数
+func (c *Context) Param(key string) string {
+	return c.Params[key]
 }
 
 // String 返回纯文本的响应方法

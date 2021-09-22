@@ -3,11 +3,13 @@ package fuzz
 import (
 	"log"
 	"net/http"
+	"strings"
 )
 
 type HandlerFunc func(c *Context)
 
 type router struct {
+	tries    map[string]*trie
 	handlers map[string]HandlerFunc
 }
 
@@ -15,17 +17,48 @@ func newRouter() *router {
 	return &router{handlers: make(map[string]HandlerFunc)}
 }
 
+// 添加路由
 func (r *router) addRoute(method string, pattern string, handler HandlerFunc) {
 	log.Printf("Route %4s - %s", method, pattern)
+	if _, ok := r.tries[method]; !ok {
+		r.tries[method] = newTrie()
+	}
+	r.tries[method].insert(pattern)
 	key := method + "-" + pattern
 	r.handlers[key] = handler
 }
 
-func (r *router) handle(c *Context) {
-	key := c.Method + "-" + c.Path
-	if handler, ok := r.handlers[key]; ok {
-		handler(c)
-	} else {
-		c.String(http.StatusNotFound, "404 NOT FOUND: %s\n", c.Path)
+// 获取路由 与 参数
+func (r *router) getRoute(method string, pattern string) (*node, map[string]string) {
+	searchParts := parsePattern(pattern)
+	params := make(map[string]string)
+	t, ok := r.tries[method]
+	if !ok {
+		return nil, nil
 	}
+	n := t.search(pattern)
+	if n != nil {
+		parts := parsePattern(n.pattern)
+		for i, part := range parts {
+			if part[0] == ':' {
+				params[part[1:]] = searchParts[i]
+			} else if part[0] == '*' && len(part) > 1 {
+				params[part[1:]] = strings.Join(searchParts[i:], "/")
+				break
+			}
+		}
+		return n, params
+	}
+	return nil, nil
+}
+
+func (r *router) handle(c *Context) {
+	n, params := r.getRoute(c.Method, c.Path)
+	if n != nil {
+		c.Params = params
+		key := c.Method + "-" + c.Path
+		r.handlers[key](c)
+		return
+	}
+	c.String(http.StatusNotFound, "404 NOT FOUND: %s\n", c.Path)
 }
