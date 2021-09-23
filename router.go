@@ -9,21 +9,24 @@ import (
 type HandlerFunc func(c *Context)
 
 type router struct {
-	tries    map[string]*trie
+	roots    map[string]*trie
 	handlers map[string]HandlerFunc
 }
 
 func newRouter() *router {
-	return &router{handlers: make(map[string]HandlerFunc)}
+	return &router{
+		roots:    make(map[string]*trie),
+		handlers: make(map[string]HandlerFunc),
+	}
 }
 
 // 添加路由
 func (r *router) addRoute(method string, pattern string, handler HandlerFunc) {
 	log.Printf("Route %4s - %s", method, pattern)
-	if _, ok := r.tries[method]; !ok {
-		r.tries[method] = newTrie()
+	if _, ok := r.roots[method]; !ok {
+		r.roots[method] = newTrie()
 	}
-	r.tries[method].insert(pattern)
+	r.roots[method].insert(pattern)
 	key := method + "-" + pattern
 	r.handlers[key] = handler
 }
@@ -32,7 +35,7 @@ func (r *router) addRoute(method string, pattern string, handler HandlerFunc) {
 func (r *router) getRoute(method string, pattern string) (*node, map[string]string) {
 	searchParts := parsePattern(pattern)
 	params := make(map[string]string)
-	t, ok := r.tries[method]
+	t, ok := r.roots[method]
 	if !ok {
 		return nil, nil
 	}
@@ -56,7 +59,7 @@ func (r *router) handle(c *Context) {
 	n, params := r.getRoute(c.Method, c.Path)
 	if n != nil {
 		c.Params = params
-		key := c.Method + "-" + c.Path
+		key := c.Method + "-" + n.pattern
 		r.handlers[key](c)
 		return
 	}

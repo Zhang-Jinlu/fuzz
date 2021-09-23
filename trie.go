@@ -39,7 +39,7 @@ func (t *trie) insert(path string) {
 
 func (t *trie) search(path string) *node {
 	if path == "" {
-		panic(errors.New("no empty path"))
+		panic(errors.New("empty path error"))
 	}
 	parts := parsePattern(path)
 	cur := t.root
@@ -47,7 +47,7 @@ func (t *trie) search(path string) *node {
 		nextPart := ""
 		if _, ok := cur.children[part]; ok {
 			nextPart = part
-		} else{
+		} else {
 			for k, _ := range cur.children {
 				if k[0] == '*' || k[0] == ':' {
 					nextPart = k
