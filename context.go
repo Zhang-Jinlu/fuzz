@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-type H map[string]interface{}
+//type H map[string]interface{}
 
 type Context struct {
 	Writer     http.ResponseWriter
@@ -47,7 +47,7 @@ func (c *Context) SetHeader(key string, value string) {
 	c.Writer.Header().Set(key, value)
 }
 
-// 获取context中参数
+// Param 获取context中参数
 func (c *Context) Param(key string) string {
 	return c.Params[key]
 }

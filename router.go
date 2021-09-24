@@ -39,7 +39,7 @@ func (r *router) getRoute(method string, pattern string) (*node, map[string]stri
 	if !ok {
 		return nil, nil
 	}
-	n := t.search(pattern)
+	n := t.search(searchParts)
 	if n != nil {
 		parts := parsePattern(n.pattern)
 		for i, part := range parts {

@@ -6,26 +6,17 @@ import (
 
 // Engine 实现了Handler接口
 type Engine struct {
+	*RouterGroup
 	router *router
+	groups []*RouterGroup
 }
 
 // New fuzz.Engine的构造方法
 func New() *Engine {
-	return &Engine{router: newRouter()}
-}
-
-func (e *Engine) addRoute(method string, pattern string, handler HandlerFunc) {
-	e.router.addRoute(method, pattern, handler)
-}
-
-// GET 添加Get请求的方法
-func (e *Engine) GET(pattern string, handler HandlerFunc) {
-	e.addRoute("GET", pattern, handler)
-}
-
-// POST 添加Post请求的方法
-func (e *Engine) POST(pattern string, handler HandlerFunc) {
-	e.addRoute("POST", pattern, handler)
+	engine := &Engine{router: newRouter()}
+	engine.RouterGroup = &RouterGroup{engine: engine}
+	engine.groups = []*RouterGroup{engine.RouterGroup}
+	return engine
 }
 
 // Run 启动Http服务的方法

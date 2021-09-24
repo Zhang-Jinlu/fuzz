@@ -37,11 +37,10 @@ func (t *trie) insert(path string) {
 	cur.pattern = path
 }
 
-func (t *trie) search(path string) *node {
-	if path == "" {
+func (t *trie) search(parts []string) *node {
+	if len(parts) == 0 {
 		panic(errors.New("empty path error"))
 	}
-	parts := parsePattern(path)
 	cur := t.root
 	for _, part := range parts {
 		nextPart := ""
