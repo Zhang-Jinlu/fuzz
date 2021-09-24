@@ -55,7 +55,7 @@ func (t *trie) search(parts []string) *node {
 			}
 		}
 		if nextPart == "" {
-			if cur.part[0] == '*' {
+			if cur.part != "" && cur.part[0] == '*' {
 				break
 			}
 			return nil

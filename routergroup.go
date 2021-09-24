@@ -1,7 +1,5 @@
 package fuzz
 
-import "log"
-
 type RouterGroup struct {
 	prefix      string
 	middlewares []HandlerFunc // support middleware
@@ -22,9 +20,7 @@ func (rg *RouterGroup) Group(prefix string) *RouterGroup {
 }
 
 func (rg *RouterGroup) addRoute(method string, pattern string, handler HandlerFunc) {
-	pattern = rg.prefix + pattern // 拼接group的前缀
-	log.Printf("Route %4s - %s", method, pattern)
-	rg.engine.router.addRoute(method, pattern, handler)
+	rg.engine.router.addRoute(method, rg.prefix + pattern, handler)  // 拼接group的前缀
 }
 
 // GET 添加Get请求的方法
