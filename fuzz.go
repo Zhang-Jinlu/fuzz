@@ -2,6 +2,7 @@ package fuzz
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -25,6 +26,7 @@ func New() *Engine {
 
 // Run 启动Http服务的方法
 func (e *Engine) Run(addr string) (err error) {
+	log.Fatalf("server is listening on %s\n", addr)
 	return http.ListenAndServe(addr, e)
 }
 
