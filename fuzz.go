@@ -1,6 +1,7 @@
 package fuzz
 
 import (
+	"html/template"
 	"net/http"
 	"strings"
 )
@@ -8,8 +9,10 @@ import (
 // Engine 实现了Handler接口
 type Engine struct {
 	*RouterGroup
-	router *router
-	groups []*RouterGroup
+	router        *router
+	groups        []*RouterGroup
+	htmlTemplates *template.Template // for html render
+	funcMap       template.FuncMap   // for html render
 }
 
 // New fuzz.Engine的构造方法
@@ -34,7 +37,17 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	c := newContext(w, req)
+	// 上线文中添加engine的指针
+	c.engine = e
 	// 将请求对应路由组中的中间件放在上下文中
 	c.handlers = middlewares
 	e.router.handle(c)
+}
+
+func (e *Engine) SetFuncMap(funcMap template.FuncMap) {
+	e.funcMap = funcMap
+}
+
+func (e *Engine) LoadHTMLGlob(pattern string) {
+	e.htmlTemplates = template.Must(template.New("").Funcs(e.funcMap).ParseGlob(pattern))
 }
