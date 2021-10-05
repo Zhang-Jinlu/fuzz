@@ -1,6 +1,9 @@
 package fuzz
 
-import "log"
+import (
+	"net/http"
+	"path"
+)
 
 type RouterGroup struct {
 	prefix      string
@@ -22,9 +25,7 @@ func (rg *RouterGroup) Group(prefix string) *RouterGroup {
 }
 
 func (rg *RouterGroup) addRoute(method string, pattern string, handler HandlerFunc) {
-	pattern = rg.prefix + pattern // 拼接group的前缀
-	log.Printf("Route %4s - %s", method, pattern)
-	rg.engine.router.addRoute(method, pattern, handler)
+	rg.engine.router.addRoute(method, rg.prefix+pattern, handler) // 拼接group的前缀
 }
 
 // GET 添加Get请求的方法
@@ -35,4 +36,33 @@ func (rg *RouterGroup) GET(pattern string, handler HandlerFunc) {
 // POST 添加Post请求的方法
 func (rg *RouterGroup) POST(pattern string, handler HandlerFunc) {
 	rg.addRoute("POST", pattern, handler)
+}
+
+// Use 添加中间件
+func (rg *RouterGroup) Use(middlewares ...HandlerFunc) {
+	rg.middlewares = append(rg.middlewares, middlewares...)
+}
+
+//  静态文件服务handler
+func (rg *RouterGroup) createStaticHandler(relativePath string, fs http.FileSystem) HandlerFunc {
+	absolutePath := path.Join(rg.prefix, relativePath)
+	fileServer := http.StripPrefix(absolutePath, http.FileServer(fs))
+	return func(c *Context) {
+		file := c.Param("filepath")
+		// Check if file exists and/or if we have permission to access it
+		if _, err := fs.Open(file); err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		fileServer.ServeHTTP(c.Writer, c.Req)
+	}
+}
+
+// Static 静态文件服务
+func (rg *RouterGroup) Static(relativePath string, root string) {
+	handler := rg.createStaticHandler(relativePath, http.Dir(root))
+	urlPattern := path.Join(relativePath, "/*filepath")
+	// Register GET handlers
+	rg.GET(urlPattern, handler)
 }

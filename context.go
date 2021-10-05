@@ -9,12 +9,18 @@ import (
 //type H map[string]interface{}
 
 type Context struct {
-	Writer     http.ResponseWriter
-	Req        *http.Request
-	Path       string
-	Method     string
-	Params     map[string]string
+	// 基本http对象
+	Writer http.ResponseWriter
+	Req    *http.Request
+	// 请求信息
+	Path   string
+	Method string
+	Params map[string]string
+	// 响应信息
 	StatusCode int
+	// 中间件
+	handlers []HandlerFunc
+	index    int
 }
 
 func newContext(w http.ResponseWriter, req *http.Request) *Context {
@@ -23,6 +29,16 @@ func newContext(w http.ResponseWriter, req *http.Request) *Context {
 		Req:    req,
 		Path:   req.URL.Path,
 		Method: req.Method,
+		index:  -1,
+	}
+}
+
+func (c *Context) Next() {
+	c.index++
+	// 一次调用所用中间件
+	for c.index < len(c.handlers) {
+		c.handlers[c.index](c)
+		c.index++
 	}
 }
 
