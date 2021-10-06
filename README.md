@@ -1,3 +1,3 @@
-# fuzz
+# Fuzz
 
-1
+A Golang Web Framework
