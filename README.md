@@ -1,3 +1,3 @@
 # Fuzz
 
-A Golang Web Framework
+A simple http framework written in Go.
